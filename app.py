@@ -3,6 +3,7 @@ import google.generativeai as genai
 import urllib.parse
 import xml.etree.ElementTree as ET
 import requests
+import json
 
 # App Interface Setup
 st.set_page_config(page_title="AI Career Reputation & Live Job Hub", page_icon="🤖")
@@ -25,21 +26,22 @@ if st.button("Run Profile Audit & Pull Jobs Right Here"):
     else:
         with st.spinner("Analyzing profile and compiling active regional jobs..."):
             
-            # 1. Fetch AI Strategy Report
+            # Initialize AI Model
+            ai_active = True
             try:
                 genai.configure(api_key=gemini_key)
                 gemini_model = genai.GenerativeModel('gemini-2.5-flash')
                 
+                # 1. Fetch AI Strategy Report
                 test_prompt = f"Imagine you are a technical recruiter. If I ask you about '{name}' who works as a '{role}' in '{city}', give a quick 3-sentence summary of what is missing from their profile to get picked up by applicant tracking software."
                 reputation_response = gemini_model.generate_content(test_prompt)
                 st.success("Analysis Complete!")
                 st.subheader("👁️ Your AI Audit Report:")
                 st.info(reputation_response.text)
-                ai_active = True
             except Exception as e:
                 ai_active = False
                 if "429" in str(e):
-                    st.warning("⏳ Google Gemini Free Tier is cooling down. Code automatically running on local fallback mode.")
+                    st.warning("⏳ Google Gemini Free Tier is cooling down. Running on fallback mode with custom role parsing.")
                 else:
                     st.error(f"AI Connection Error: {str(e)}")
 
@@ -72,19 +74,40 @@ if st.button("Run Profile Audit & Pull Jobs Right Here"):
             except:
                 pass
 
-            # 3. Fallback Database with Direct Links and Colored Badges
+            # 3. Dynamic Fallback Generation (Fix: Pulls exact dynamic skills for the typed role)
             if jobs_found < 10:
+                # Ask Gemini to generate specific skill tags for the user's targeted role to keep it 100% accurate
+                dynamic_skills = ["Core Concepts", "Problem Solving", "Tools Execution"]
+                if ai_active:
+                    try:
+                        skills_prompt = f"Provide a JSON list of exactly 4 major high-demand technical skill keywords required for the job role '{role}'. Output ONLY a valid JSON array of strings, like [\"Skill1\", \"Skill2\"]. No markdown, no formatting text."
+                        skills_response = gemini_model.generate_content(skills_prompt)
+                        cleaned_json = skills_response.text.replace("```json", "").replace("```", "").strip()
+                        dynamic_skills = json.loads(cleaned_json)
+                    except:
+                        # Baseline safety targets if JSON parsing drops out
+                        if "developer" in role.lower() or "engineer" in role.lower():
+                            dynamic_skills = ["Python", "SQL", "Git Architecture", "System Design"]
+                        elif "analyst" in role.lower() or "data" in role.lower():
+                            dynamic_skills = ["SQL", "Excel Platforms", "PowerBI / Tableau", "Python Data Sets"]
+                else:
+                    # Cooldown static backup checks
+                    if "developer" in role.lower() or "engineer" in role.lower():
+                        dynamic_skills = ["Coding logic", "Debugging Frameworks", "Git Control"]
+                    else:
+                        dynamic_skills = ["Data Processing", "Reporting Dashboards", "Analytical Systems"]
+
                 fallback_jobs = [
-                    {"title": f"Senior {role}", "company": "Wipro", "skills": ["SQL", "Python", "Dashboards"], "url": "https://wipro.com"},
-                    {"title": f"Junior {role} Associate", "company": "Infosys", "skills": ["Data Cleansing", "Excel", "Tableau"], "url": "https://infosys.com"},
-                    {"title": f"Infrastructure {role} Lead", "company": "TCS", "skills": ["Cloud Databases", "AWS", "Analytics"], "url": "https://tcs.com"},
-                    {"title": f"Core Systems {role}", "company": "HCLTech", "skills": ["Statistical Modeling", "Python", "R Scripting"], "url": "https://hcltech.com"},
-                    {"title": f"Strategic Business {role}", "company": "Cognizant", "skills": ["PowerBI", "Requirement Mapping"], "url": "https://cognizant.com"},
-                    {"title": f"Technical {role} Consultant", "company": "Tech Mahindra", "skills": ["ETL Pipelines", "Data Engineering", "SQL"], "url": "https://techmahindra.com"},
-                    {"title": f"Operations {role}", "company": "Accenture", "skills": ["Process Optimization", "Metrics Reporting"], "url": "https://accenture.com"},
-                    {"title": f"Lead Analyst - Cloud Track", "company": "Capgemini", "skills": ["Data Warehousing", "Big Data", "Analytics"], "url": "https://capgemini.com"},
-                    {"title": f"Enterprise Data Evaluator", "company": "LTIMindtree", "skills": ["Business Analytics", "Predictive Modeling"], "url": "https://ltimindtree.com"},
-                    {"title": f"Predictive Insights {role}", "company": "Genpact", "skills": ["Data Visualization", "Python", "Pattern Recognition"], "url": "https://genpact.com"}
+                    {"title": f"Senior {role}", "company": "Wipro", "url": "https://wipro.com"},
+                    {"title": f"Junior {role} Associate", "company": "Infosys", "url": "https://infosys.com"},
+                    {"title": f"Infrastructure {role} Lead", "company": "TCS", "url": "https://tcs.com"},
+                    {"title": f"Core Systems {role}", "company": "HCLTech", "url": "https://hcltech.com"},
+                    {"title": f"Strategic Business {role}", "company": "Cognizant", "url": "https://cognizant.com"},
+                    {"title": f"Technical {role} Consultant", "company": "Tech Mahindra", "url": "https://techmahindra.com"},
+                    {"title": f"Operations {role}", "company": "Accenture", "url": "https://accenture.com"},
+                    {"title": f"Lead Analyst Track", "company": "Capgemini", "url": "https://capgemini.com"},
+                    {"title": f"Enterprise Systems Evaluator", "company": "LTIMindtree", "url": "https://ltimindtree.com"},
+                    {"title": f"Predictive Insights {role}", "company": "Genpact", "url": "https://genpact.com"}
                 ]
                 
                 for i in range(jobs_found, 10):
@@ -94,11 +117,10 @@ if st.button("Run Profile Audit & Pull Jobs Right Here"):
                         st.markdown(f"### 🎯 {job['title']}")
                         st.markdown(f"🏢 **Company:** {job['company']}")
                         
-                        # Generates clean, colored capsule HTML layouts for skills
-                        skills_html = "".join([f'<span style="background-color:#1E3A8A; color:white; padding:4px 10px; margin-right:6px; border-radius:12px; font-size:12px; font-weight:bold; display:inline-block;">{skill}</span>' for skill in job['skills']])
+                        # Renders the precise job-related skill badges automatically
+                        skills_html = "".join([f'<span style="background-color:#1E3A8A; color:white; padding:4px 10px; margin-right:6px; border-radius:12px; font-size:12px; font-weight:bold; display:inline-block;">{skill}</span>' for skill in dynamic_skills])
                         st.markdown(f"💡 **Key Skills Required:** {skills_html}", unsafe_allow_html=True)
-                        st.write("") # Spacer
+                        st.write("") 
                         
-                        # Direct, safe corporate button link
                         st.link_button(f"🔍 Open Official {job['company']} Career Portal", job['url'], use_container_width=True)
                     st.write("")
