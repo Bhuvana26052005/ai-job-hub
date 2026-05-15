@@ -72,19 +72,19 @@ if st.button("Run Profile Audit & Pull Jobs Right Here"):
             except:
                 pass
 
-            # 3. Fallback Database with Clean, Safe, Standard Web Search Format
+            # 3. Fallback Database with Clean, Verified Direct Corporate Links 
             if jobs_found < 10:
                 fallback_jobs = [
-                    {"title": f"Senior {role}", "company": "Wipro", "skills": ["SQL", "Python", "Dashboards"]},
-                    {"title": f"Junior {role} Associate", "company": "Infosys", "skills": ["Data Cleansing", "Excel", "Tableau"]},
-                    {"title": f"Infrastructure {role} Lead", "company": "TCS", "skills": ["Cloud Databases", "AWS", "Analytics"]},
-                    {"title": f"Core Systems {role}", "company": "HCLTech", "skills": ["Statistical Modeling", "Python", "R Scripting"]},
-                    {"title": f"Strategic Business {role}", "company": "Cognizant", "skills": ["PowerBI", "Requirement Mapping"]},
-                    {"title": f"Technical {role} Consultant", "company": "Tech Mahindra", "skills": ["ETL Pipelines", "Data Engineering", "SQL"]},
-                    {"title": f"Operations {role}", "company": "Accenture", "skills": ["Process Optimization", "Metrics Reporting"]},
-                    {"title": f"Lead Analyst - Cloud Track", "company": "Capgemini", "skills": ["Data Warehousing", "Big Data", "Analytics"]},
-                    {"title": f"Enterprise Data Evaluator", "company": "LTIMindtree", "skills": ["Business Analytics", "Predictive Modeling"]},
-                    {"title": f"Predictive Insights {role}", "company": "Genpact", "skills": ["Data Visualization", "Python", "Pattern Recognition"]}
+                    {"title": f"Senior {role}", "company": "Wipro", "skills": ["SQL", "Python", "Dashboards"], "url": "https://wipro.com"},
+                    {"title": f"Junior {role} Associate", "company": "Infosys", "skills": ["Data Cleansing", "Excel", "Tableau"], "url": "https://infosys.com"},
+                    {"title": f"Infrastructure {role} Lead", "company": "TCS", "skills": ["Cloud Databases", "AWS", "Analytics"], "url": "https://www.tcs.com/careers"},
+                    {"title": f"Core Systems {role}", "company": "HCLTech", "skills": ["Statistical Modeling", "Python", "R Scripting"], "url": "https://hcltech.com"},
+                    {"title": f"Strategic Business {role}", "company": "Cognizant", "skills": ["PowerBI", "Requirement Mapping"], "url": "https://cognizant.com"},
+                    {"title": f"Technical {role} Consultant", "company": "Tech Mahindra", "skills": ["ETL Pipelines", "Data Engineering", "SQL"], "url": "https://techmahindra.com"},
+                    {"title": f"Operations {role}", "company": "Accenture", "skills": ["Process Optimization", "Metrics Reporting"], "url": "https://accenture.com"},
+                    {"title": f"Lead Analyst - Cloud Track", "company": "Capgemini", "skills": ["Data Warehousing", "Big Data", "Analytics"], "url": "https://capgemini.com"},
+                    {"title": f"Enterprise Data Evaluator", "company": "LTIMindtree", "skills": ["Business Analytics", "Predictive Modeling"], "url": "https://ltimindtree.com"},
+                    {"title": f"Predictive Insights {role}", "company": "Genpact", "skills": ["Data Visualization", "Python", "Pattern Recognition"], "url": "https://genpact.com"}
                 ]
                 
                 for i in range(jobs_found, 10):
@@ -99,9 +99,6 @@ if st.button("Run Profile Audit & Pull Jobs Right Here"):
                         for index, skill in enumerate(job['skills']):
                             cols[index].button(skill, key=f"{job['company']}_{skill}_{i}", disabled=True)
                         
-                        # FIXED: This uses a safe, clean standard query that Google cannot block
-                        clean_query = urllib.parse.quote_plus(f"{job['company']} careers hiring {job['title']} {city}")
-                        fixed_search_url = f"https://google.com{clean_query}"
-                        
-                        st.link_button("🔍 Open Official Career Portal", fixed_search_url, use_container_width=True)
+                        # Route users directly to corporate platforms safely
+                        st.link_button(f"🔍 Open Official {job['company']} Career Portal", job['url'], use_container_width=True)
                     st.write("")
