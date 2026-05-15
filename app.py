@@ -13,7 +13,7 @@ st.write("Your active profile assessment and live embedded job opportunities mar
 # User Inputs
 name = st.text_input("Enter your Full Name:", placeholder="Bhuvaneshwari")
 role = st.text_input("Enter your Job Role:", placeholder="Data Analyst")
-city = st.text_input("Enter your City:", placeholder="Chennai")
+city = st.text_input("Enter your City/Country:", placeholder="Canada")
 
 # API Key Input
 gemini_key = st.text_input("Enter Gemini API Key:", type="password")
@@ -46,7 +46,7 @@ if st.button("Run Profile Audit & Pull Jobs Right Here"):
                     st.error(f"AI Connection Error: {str(e)}")
 
             # 2. Fetch and Display Live Jobs
-            st.subheader(f"💼 Open {role} Jobs Found Locally in {city}:")
+            st.subheader(f"💼 Open {role} Jobs Found in {city}:")
             
             jobs_found = 0
             try:
@@ -74,53 +74,68 @@ if st.button("Run Profile Audit & Pull Jobs Right Here"):
             except:
                 pass
 
-            # 3. Dynamic Fallback Generation (Fix: Pulls exact dynamic skills for the typed role)
+            # 3. Dynamic Global Fallback Generation
             if jobs_found < 10:
-                # Ask Gemini to generate specific skill tags for the user's targeted role to keep it 100% accurate
-                dynamic_skills = ["Core Concepts", "Problem Solving", "Tools Execution"]
-                if ai_active:
-                    try:
-                        skills_prompt = f"Provide a JSON list of exactly 4 major high-demand technical skill keywords required for the job role '{role}'. Output ONLY a valid JSON array of strings, like [\"Skill1\", \"Skill2\"]. No markdown, no formatting text."
-                        skills_response = gemini_model.generate_content(skills_prompt)
-                        cleaned_json = skills_response.text.replace("```json", "").replace("```", "").strip()
-                        dynamic_skills = json.loads(cleaned_json)
-                    except:
-                        # Baseline safety targets if JSON parsing drops out
-                        if "developer" in role.lower() or "engineer" in role.lower():
-                            dynamic_skills = ["Python", "SQL", "Git Architecture", "System Design"]
-                        elif "analyst" in role.lower() or "data" in role.lower():
-                            dynamic_skills = ["SQL", "Excel Platforms", "PowerBI / Tableau", "Python Data Sets"]
+                # Baseline safety targets for skills
+                if "developer" in role.lower() or "engineer" in role.lower():
+                    dynamic_skills = ["Python", "SQL", "Git Architecture", "System Design"]
                 else:
-                    # Cooldown static backup checks
-                    if "developer" in role.lower() or "engineer" in role.lower():
-                        dynamic_skills = ["Coding logic", "Debugging Frameworks", "Git Control"]
-                    else:
-                        dynamic_skills = ["Data Processing", "Reporting Dashboards", "Analytical Systems"]
-
-                fallback_jobs = [
-                    {"title": f"Senior {role}", "company": "Wipro", "url": "https://wipro.com"},
-                    {"title": f"Junior {role} Associate", "company": "Infosys", "url": "https://infosys.com"},
-                    {"title": f"Infrastructure {role} Lead", "company": "TCS", "url": "https://tcs.com"},
-                    {"title": f"Core Systems {role}", "company": "HCLTech", "url": "https://hcltech.com"},
-                    {"title": f"Strategic Business {role}", "company": "Cognizant", "url": "https://cognizant.com"},
-                    {"title": f"Technical {role} Consultant", "company": "Tech Mahindra", "url": "https://techmahindra.com"},
-                    {"title": f"Operations {role}", "company": "Accenture", "url": "https://accenture.com"},
-                    {"title": f"Lead Analyst Track", "company": "Capgemini", "url": "https://capgemini.com"},
-                    {"title": f"Enterprise Systems Evaluator", "company": "LTIMindtree", "url": "https://ltimindtree.com"},
-                    {"title": f"Predictive Insights {role}", "company": "Genpact", "url": "https://genpact.com"}
-                ]
+                    dynamic_skills = ["SQL", "Excel Platforms", "PowerBI / Tableau", "Python Data Sets"]
                 
+                # Default Indian list if everything else fails
+                fallback_companies = [
+                    {"name": "Wipro", "url": "https://wipro.com"},
+                    {"name": "Infosys", "url": "https://infosys.com"},
+                    {"name": "TCS", "url": "https://tcs.com"},
+                    {"name": "HCLTech", "url": "https://hcltech.com"},
+                    {"name": "Cognizant", "url": "https://cognizant.com"},
+                    {"name": "Tech Mahindra", "url": "https://techmahindra.com"},
+                    {"name": "Accenture", "url": "https://accenture.com"},
+                    {"name": "Capgemini", "url": "https://capgemini.com"},
+                    {"name": "LTIMindtree", "url": "https://ltimindtree.com"},
+                    {"name": "Genpact", "url": "https://genpact.com"}
+                ]
+
+                # FIX: Check if the user typed Canada or another international region, then load global tech hubs
+                is_canada = "canada" in city.lower() or "toronto" in city.lower() or "vancouver" in city.lower()
+                
+                if is_canada:
+                    fallback_companies = [
+                        {"name": "Shopify", "url": "https://shopify.com"},
+                        {"name": "RBC (Royal Bank of Canada)", "url": "https://rbc.com"},
+                        {"name": "TD Bank", "url": "https://td.com"},
+                        {"name": "Deloitte Canada", "url": "https://deloitte.com"},
+                        {"name": "CGI Group", "url": "https://cgi.com"},
+                        {"name": "Scotiabank", "url": "https://scotiabank.com"},
+                        {"name": "Amazon Canada", "url": "https://amazon.jobs"},
+                        {"name": "Rogers Communications", "url": "https://rogers.com"},
+                        {"name": "Bell Canada", "url": "https://bell.ca"},
+                        {"name": "OpenText", "url": "https://opentext.com"}
+                    ]
+                elif ai_active:
+                    # Advanced: Ask Gemini to fetch 10 major employers dynamically if it's a completely different country
+                    try:
+                        comp_prompt = f"Provide a JSON list of exactly 10 major top-tier corporate employers frequently hiring technical staff in '{city}'. Output ONLY a valid JSON array of objects with keys 'name' and generic career 'url'. Do not include markdown or formatting text."
+                        comp_response = gemini_model.generate_content(comp_prompt)
+                        cleaned_json = comp_response.text.replace("```json", "").replace("```", "").strip()
+                        fallback_companies = json.loads(cleaned_json)
+                    except:
+                        pass
+
+                # Print out the localized target cards
                 for i in range(jobs_found, 10):
-                    job = fallback_jobs[i]
+                    # Prevent list index errors
+                    if i - jobs_found >= len(fallback_companies):
+                        break
+                    job_data = fallback_companies[i - jobs_found]
                     
                     with st.container(border=True):
-                        st.markdown(f"### 🎯 {job['title']}")
-                        st.markdown(f"🏢 **Company:** {job['company']}")
+                        st.markdown(f"### 🎯 {role} Specialist")
+                        st.markdown(f"🏢 **Company:** {job_data['name']}")
                         
-                        # Renders the precise job-related skill badges automatically
                         skills_html = "".join([f'<span style="background-color:#1E3A8A; color:white; padding:4px 10px; margin-right:6px; border-radius:12px; font-size:12px; font-weight:bold; display:inline-block;">{skill}</span>' for skill in dynamic_skills])
                         st.markdown(f"💡 **Key Skills Required:** {skills_html}", unsafe_allow_html=True)
                         st.write("") 
                         
-                        st.link_button(f"🔍 Open Official {job['company']} Career Portal", job['url'], use_container_width=True)
+                        st.link_button(f"🔍 Open Official {job_data['name']} Career Portal", job_data['url'], use_container_width=True)
                     st.write("")
