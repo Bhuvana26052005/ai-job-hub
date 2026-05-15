@@ -72,12 +72,12 @@ if st.button("Run Profile Audit & Pull Jobs Right Here"):
             except:
                 pass
 
-            # 3. Fallback Database with Clean, Verified Direct Corporate Links 
+            # 3. Fallback Database with Direct Links and Colored Badges
             if jobs_found < 10:
                 fallback_jobs = [
                     {"title": f"Senior {role}", "company": "Wipro", "skills": ["SQL", "Python", "Dashboards"], "url": "https://wipro.com"},
                     {"title": f"Junior {role} Associate", "company": "Infosys", "skills": ["Data Cleansing", "Excel", "Tableau"], "url": "https://infosys.com"},
-                    {"title": f"Infrastructure {role} Lead", "company": "TCS", "skills": ["Cloud Databases", "AWS", "Analytics"], "url": "https://www.tcs.com/careers"},
+                    {"title": f"Infrastructure {role} Lead", "company": "TCS", "skills": ["Cloud Databases", "AWS", "Analytics"], "url": "https://tcs.com"},
                     {"title": f"Core Systems {role}", "company": "HCLTech", "skills": ["Statistical Modeling", "Python", "R Scripting"], "url": "https://hcltech.com"},
                     {"title": f"Strategic Business {role}", "company": "Cognizant", "skills": ["PowerBI", "Requirement Mapping"], "url": "https://cognizant.com"},
                     {"title": f"Technical {role} Consultant", "company": "Tech Mahindra", "skills": ["ETL Pipelines", "Data Engineering", "SQL"], "url": "https://techmahindra.com"},
@@ -94,11 +94,11 @@ if st.button("Run Profile Audit & Pull Jobs Right Here"):
                         st.markdown(f"### 🎯 {job['title']}")
                         st.markdown(f"🏢 **Company:** {job['company']}")
                         
-                        st.write("💡 **Key Skills Required:**")
-                        cols = st.columns(len(job['skills']))
-                        for index, skill in enumerate(job['skills']):
-                            cols[index].button(skill, key=f"{job['company']}_{skill}_{i}", disabled=True)
+                        # Generates clean, colored capsule HTML layouts for skills
+                        skills_html = "".join([f'<span style="background-color:#1E3A8A; color:white; padding:4px 10px; margin-right:6px; border-radius:12px; font-size:12px; font-weight:bold; display:inline-block;">{skill}</span>' for skill in job['skills']])
+                        st.markdown(f"💡 **Key Skills Required:** {skills_html}", unsafe_allow_html=True)
+                        st.write("") # Spacer
                         
-                        # Route users directly to corporate platforms safely
+                        # Direct, safe corporate button link
                         st.link_button(f"🔍 Open Official {job['company']} Career Portal", job['url'], use_container_width=True)
                     st.write("")
