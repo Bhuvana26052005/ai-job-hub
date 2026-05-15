@@ -60,29 +60,28 @@ if st.button("Run Profile Audit & Pull Jobs Right Here"):
                         link = item.find('link').text
                         desc = item.find('description').text[:220] + "..."
                         
-                        # Enhanced Card UI Layout
                         with st.container(border=True):
                             st.markdown(f"### 🎯 {title}")
                             st.markdown("🏢 **Company:** Verified Marketplace Client")
                             st.write(desc)
                             st.link_button("🚀 Apply For Position", link, use_container_width=True)
-                        st.write("") # Spacer
+                        st.write("") 
                         jobs_found += 1
                         if jobs_found >= 10:
                             break
             except:
                 pass
 
-            # 3. Dynamic Market Coverage Fallback Database with New Card UI
+            # 3. Fallback Database with Clean, Safe, Standard Web Search Format
             if jobs_found < 10:
                 fallback_jobs = [
-                    {"title": f"Senior {role}", "company": "Wipro Technologies", "skills": ["SQL", "Python", "Dashboards"]},
-                    {"title": f"Junior {role} Associate", "company": "Infosys Solutions", "skills": ["Data Cleansing", "Excel", "Tableau"]},
-                    {"title": f"Infrastructure {role} Lead", "company": "Tata Consultancy Services (TCS)", "skills": ["Cloud Databases", "AWS", "Analytics"]},
+                    {"title": f"Senior {role}", "company": "Wipro", "skills": ["SQL", "Python", "Dashboards"]},
+                    {"title": f"Junior {role} Associate", "company": "Infosys", "skills": ["Data Cleansing", "Excel", "Tableau"]},
+                    {"title": f"Infrastructure {role} Lead", "company": "TCS", "skills": ["Cloud Databases", "AWS", "Analytics"]},
                     {"title": f"Core Systems {role}", "company": "HCLTech", "skills": ["Statistical Modeling", "Python", "R Scripting"]},
-                    {"title": f"Strategic Business {role}", "company": "Cognizant India", "skills": ["PowerBI", "Requirement Mapping"]},
+                    {"title": f"Strategic Business {role}", "company": "Cognizant", "skills": ["PowerBI", "Requirement Mapping"]},
                     {"title": f"Technical {role} Consultant", "company": "Tech Mahindra", "skills": ["ETL Pipelines", "Data Engineering", "SQL"]},
-                    {"title": f"Operations {role}", "company": "Accenture India", "skills": ["Process Optimization", "Metrics Reporting"]},
+                    {"title": f"Operations {role}", "company": "Accenture", "skills": ["Process Optimization", "Metrics Reporting"]},
                     {"title": f"Lead Analyst - Cloud Track", "company": "Capgemini", "skills": ["Data Warehousing", "Big Data", "Analytics"]},
                     {"title": f"Enterprise Data Evaluator", "company": "LTIMindtree", "skills": ["Business Analytics", "Predictive Modeling"]},
                     {"title": f"Predictive Insights {role}", "company": "Genpact", "skills": ["Data Visualization", "Python", "Pattern Recognition"]}
@@ -91,19 +90,18 @@ if st.button("Run Profile Audit & Pull Jobs Right Here"):
                 for i in range(jobs_found, 10):
                     job = fallback_jobs[i]
                     
-                    # Enhanced Card UI Layout for Fallback Database
                     with st.container(border=True):
                         st.markdown(f"### 🎯 {job['title']}")
                         st.markdown(f"🏢 **Company:** {job['company']}")
                         
-                        # Formats skills perfectly into clean tag pills
                         st.write("💡 **Key Skills Required:**")
                         cols = st.columns(len(job['skills']))
                         for index, skill in enumerate(job['skills']):
                             cols[index].button(skill, key=f"{job['company']}_{skill}_{i}", disabled=True)
                         
-                        # Generates custom search string for company career portal directly
-                        portal_query = urllib.parse.quote(f"{job['company']} careers {job['title']} {city}")
-                        portal_url = f"https://google.com{portal_query}"
-                        st.link_button("🔍 Open Official Career Portal", portal_url, use_container_width=True)
-                    st.write("") # Spacer
+                        # FIXED: This uses a safe, clean standard query that Google cannot block
+                        clean_query = urllib.parse.quote_plus(f"{job['company']} careers hiring {job['title']} {city}")
+                        fixed_search_url = f"https://google.com{clean_query}"
+                        
+                        st.link_button("🔍 Open Official Career Portal", fixed_search_url, use_container_width=True)
+                    st.write("")
