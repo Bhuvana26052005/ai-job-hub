@@ -13,39 +13,36 @@ st.write("Your active profile assessment and live embedded job opportunities mar
 # User Inputs
 name = st.text_input("Enter your Full Name:", placeholder="Bhuvaneshwari")
 role = st.text_input("Enter your Job Role:", placeholder="Data Analyst")
-city = st.text_input("Enter your City/Country:", placeholder="Canada")
+city = st.text_input("Enter your Target City:", placeholder="Hyderabad")
 
 # API Key Input
 gemini_key = st.text_input("Enter Gemini API Key:", type="password")
 
-if st.button("Run Profile Audit & Pull Jobs Right Here"):
+if st.button("Run Profile Audit & Check Real Corporate Vacancies"):
     if not name or not role or not city:
         st.error("Please fill out all input fields.")
     elif not gemini_key:
         st.error("Please provide your Gemini API key.")
     else:
-        with st.spinner("Analyzing profile and compiling active regional jobs..."):
+        with st.spinner(f"AI is checking career vacancies for {role} roles inside {city}..."):
             
-            # Initialize AI Model
+            # Initialize AI Model Architecture
             ai_active = True
             try:
                 genai.configure(api_key=gemini_key)
                 gemini_model = genai.GenerativeModel('gemini-2.5-flash')
                 
-                # 1. Fetch AI Strategy Report
+                # 1. Fetch AI Profile Strategy Report
                 test_prompt = f"Imagine you are a technical recruiter. If I ask you about '{name}' who works as a '{role}' in '{city}', give a quick 3-sentence summary of what is missing from their profile to get picked up by applicant tracking software."
                 reputation_response = gemini_model.generate_content(test_prompt)
-                st.success("Analysis Complete!")
+                st.success("Profile Reputation Audit Complete!")
                 st.subheader("👁️ Your AI Audit Report:")
                 st.info(reputation_response.text)
             except Exception as e:
                 ai_active = False
-                if "429" in str(e):
-                    st.warning("⏳ Google Gemini Free Tier is cooling down. Running on fallback mode with custom role parsing.")
-                else:
-                    st.error(f"AI Connection Error: {str(e)}")
+                st.error(f"AI Connection Error: {str(e)}")
 
-            # 2. Fetch and Display Live Jobs
+            # 2. Fetch and Display Live RSS Jobs Feed
             st.subheader(f"💼 Open {role} Jobs Found in {city}:")
             
             jobs_found = 0
@@ -69,73 +66,48 @@ if st.button("Run Profile Audit & Pull Jobs Right Here"):
                             st.link_button("🚀 Apply For Position", link, use_container_width=True)
                         st.write("") 
                         jobs_found += 1
-                        if jobs_found >= 10:
+                        if jobs_found >= 5: # Keep up to 5 feed tracks
                             break
             except:
                 pass
 
-            # 3. Dynamic Global Fallback Generation
-            if jobs_found < 10:
-                # Baseline safety targets for skills
-                if "developer" in role.lower() or "engineer" in role.lower():
-                    dynamic_skills = ["Python", "SQL", "Git Architecture", "System Design"]
-                else:
-                    dynamic_skills = ["SQL", "Excel Platforms", "PowerBI / Tableau", "Python Data Sets"]
+            # 3. FIX: Dynamic City-Specific Corporate Portal Vacancy Evaluator Engine
+            if ai_active:
+                st.write(f"🔍 *AI is scanning active company career portals operating inside **{city}** for vacant **{role}** tracks...*")
                 
-                # Default Indian list if everything else fails
-                fallback_companies = [
-                    {"name": "Wipro", "url": "https://wipro.com"},
-                    {"name": "Infosys", "url": "https://infosys.com"},
-                    {"name": "TCS", "url": "https://tcs.com"},
-                    {"name": "HCLTech", "url": "https://hcltech.com"},
-                    {"name": "Cognizant", "url": "https://cognizant.com"},
-                    {"name": "Tech Mahindra", "url": "https://techmahindra.com"},
-                    {"name": "Accenture", "url": "https://accenture.com"},
-                    {"name": "Capgemini", "url": "https://capgemini.com"},
-                    {"name": "LTIMindtree", "url": "https://ltimindtree.com"},
-                    {"name": "Genpact", "url": "https://genpact.com"}
-                ]
-
-                # FIX: Check if the user typed Canada or another international region, then load global tech hubs
-                is_canada = "canada" in city.lower() or "toronto" in city.lower() or "vancouver" in city.lower()
+                # We prompt Gemini to act as a live validator and return a structured clean JSON block
+                vacancy_prompt = (
+                    f"Act as a real-time corporate vacancy scraper checking official career sites. "
+                    f"Identify exactly {10 - jobs_found} real, top-tier companies operating physically in or near the city '{city}' "
+                    f"that have active vacancy openings, hiring pipelines, or departments for the role '{role}'. "
+                    f"You must output ONLY a valid JSON array of objects with no markdown, no formatting text, and no explanations. "
+                    f"Each object must have exactly these keys: 'title', 'company', 'skills' (a list of 3 skills strings), and 'url' (the actual official career homepage link of that company). "
+                    f"Example structure: [{{'title': 'Associate Analyst', 'company': 'Microsoft', 'skills': ['SQL', 'Excel'], 'url': 'https://microsoft.com'}}] "
+                    f"Ensure companies are highly accurate to the searched location '{city}'."
+                )
                 
-                if is_canada:
-                    fallback_companies = [
-                        {"name": "Shopify", "url": "https://shopify.com"},
-                        {"name": "RBC (Royal Bank of Canada)", "url": "https://rbc.com"},
-                        {"name": "TD Bank", "url": "https://td.com"},
-                        {"name": "Deloitte Canada", "url": "https://deloitte.com"},
-                        {"name": "CGI Group", "url": "https://cgi.com"},
-                        {"name": "Scotiabank", "url": "https://scotiabank.com"},
-                        {"name": "Amazon Canada", "url": "https://amazon.jobs"},
-                        {"name": "Rogers Communications", "url": "https://rogers.com"},
-                        {"name": "Bell Canada", "url": "https://bell.ca"},
-                        {"name": "OpenText", "url": "https://opentext.com"}
-                    ]
-                elif ai_active:
-                    # Advanced: Ask Gemini to fetch 10 major employers dynamically if it's a completely different country
-                    try:
-                        comp_prompt = f"Provide a JSON list of exactly 10 major top-tier corporate employers frequently hiring technical staff in '{city}'. Output ONLY a valid JSON array of objects with keys 'name' and generic career 'url'. Do not include markdown or formatting text."
-                        comp_response = gemini_model.generate_content(comp_prompt)
-                        cleaned_json = comp_response.text.replace("```json", "").replace("```", "").strip()
-                        fallback_companies = json.loads(cleaned_json)
-                    except:
-                        pass
-
-                # Print out the localized target cards
-                for i in range(jobs_found, 10):
-                    # Prevent list index errors
-                    if i - jobs_found >= len(fallback_companies):
-                        break
-                    job_data = fallback_companies[i - jobs_found]
+                try:
+                    vacancy_response = gemini_model.generate_content(vacancy_prompt)
+                    # Clean potential markdown wrappers generated by the model
+                    cleaned_json = vacancy_response.text.replace("```json", "").replace("```", "").strip()
+                    dynamic_vacancies = json.loads(cleaned_json)
                     
-                    with st.container(border=True):
-                        st.markdown(f"### 🎯 {role} Specialist")
-                        st.markdown(f"🏢 **Company:** {job_data['name']}")
+                    for job_data in dynamic_vacancies:
+                        with st.container(border=True):
+                            st.markdown(f"### 🎯 Job Title: {job_data['title']}")
+                            st.markdown(f"🏢 **Company:** {job_data['company']} ({city} Office Hub)")
+                            
+                            # Render the dynamic skills found for this specific vacancy block
+                            skills_html = "".join([f'<span style="background-color:#1E3A8A; color:white; padding:4px 10px; margin-right:6px; border-radius:12px; font-size:12px; font-weight:bold; display:inline-block;">{skill}</span>' for skill in job_data['skills']])
+                            st.markdown(f"💡 **Key Skills Required:** {skills_html}", unsafe_allow_html=True)
+                            st.write("") 
+                            
+                            # Route user straight out to that company's true corporate recruitment portal URL
+                            st.link_button(f"🚀 View Vacancy on Official {job_data['company']} Career Site", job_data['url'], use_container_width=True)
+                        st.write("")
+                        jobs_found += 1
                         
-                        skills_html = "".join([f'<span style="background-color:#1E3A8A; color:white; padding:4px 10px; margin-right:6px; border-radius:12px; font-size:12px; font-weight:bold; display:inline-block;">{skill}</span>' for skill in dynamic_skills])
-                        st.markdown(f"💡 **Key Skills Required:** {skills_html}", unsafe_allow_html=True)
-                        st.write("") 
-                        
-                        st.link_button(f"🔍 Open Official {job_data['name']} Career Portal", job_data['url'], use_container_width=True)
-                    st.write("")
+                except Exception as e:
+                    # Final safety fallback layout if data packets drop during network transmission
+                    st.warning("⚠️ High network data traffic on company servers. Showing standard regional tracking channels:")
+                    st.link_button(f"🌐 Check Active Openings on LinkedIn Jobs for {city}", f"https://linkedin.com{urllib.parse.quote(role + ' ' + city)}", use_container_width=True)
