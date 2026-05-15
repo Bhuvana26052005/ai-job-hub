@@ -25,7 +25,7 @@ if st.button("Run Profile Audit & Pull Jobs Right Here"):
     else:
         with st.spinner("Analyzing profile and compiling active regional jobs..."):
             
-            # 1. Fetch AI Strategy Report with Quota Protection
+            # 1. Fetch AI Strategy Report
             try:
                 genai.configure(api_key=gemini_key)
                 gemini_model = genai.GenerativeModel('gemini-2.5-flash')
@@ -39,11 +39,11 @@ if st.button("Run Profile Audit & Pull Jobs Right Here"):
             except Exception as e:
                 ai_active = False
                 if "429" in str(e):
-                    st.warning("⏳ Google Gemini Free Tier is cooling down. Please wait 60 seconds before clicking the button again.")
+                    st.warning("⏳ Google Gemini Free Tier is cooling down. Code automatically running on local fallback mode.")
                 else:
                     st.error(f"AI Connection Error: {str(e)}")
 
-            # 2. Fetch and Display Live Jobs DIRECTLY inside the App via RSS Feed
+            # 2. Fetch and Display Live Jobs
             st.subheader(f"💼 Open {role} Jobs Found Locally in {city}:")
             
             jobs_found = 0
@@ -58,63 +58,52 @@ if st.button("Run Profile Audit & Pull Jobs Right Here"):
                     for item in root.findall('.//item'):
                         title = item.find('title').text
                         link = item.find('link').text
-                        desc = item.find('description').text[:250] + "..."
+                        desc = item.find('description').text[:220] + "..."
                         
-                        st.markdown(f"### 🎯 Job Title: {title}")
-                        st.markdown("🏢 **Company:** Verified Marketplace Client")
-                        st.write(desc)
-                        st.markdown(f"[Apply for this position here]({link})")
-                        st.markdown("---")
+                        # Enhanced Card UI Layout
+                        with st.container(border=True):
+                            st.markdown(f"### 🎯 {title}")
+                            st.markdown("🏢 **Company:** Verified Marketplace Client")
+                            st.write(desc)
+                            st.link_button("🚀 Apply For Position", link, use_container_width=True)
+                        st.write("") # Spacer
                         jobs_found += 1
                         if jobs_found >= 10:
                             break
-            except Exception as e:
+            except:
                 pass
 
-            # 3. Dynamic Market Coverage Fallback with Quota Protection
-            if jobs_found < 10 and ai_active:
-                needed_jobs = 10 - jobs_found
-                backup_prompt = (
-                    f"Act as a local hiring database. Generate exactly {needed_jobs} realistic, active job postings "
-                    f"for a '{role}' in or near '{city}'. You must format each job exactly like this template:\n\n"
-                    f"### 🎯 Job Title: [Insert Title Here]\n"
-                    f"🏢 **Company:** [Insert a real, major company operating in {city} here]\n"
-                    f"💡 **Key Skills Required:** [Insert skills]\n"
-                    f"🔗 **How to Apply:** [Insert clean application instructions]\n"
-                    f"--- \n\nDo not write any introductory or concluding text."
-                )
-                try:
-                    backup_response = gemini_model.generate_content(backup_prompt)
-                    st.markdown(backup_response.text)
-                    jobs_found = 10
-                except:
-                    pass
-            
-            # Full 10-job display block that triggers if AI is locked or limited
+            # 3. Dynamic Market Coverage Fallback Database with New Card UI
             if jobs_found < 10:
-                st.write(f"⚡ *Displaying standard market track listings for {role} roles:*")
-                
-                # Full 10-Job Offline Database Structure
                 fallback_jobs = [
-                    {"title": f"Senior {role}", "company": "Wipro Technologies", "skills": "SQL, Python, Advanced Dashboards"},
-                    {"title": f"Junior {role} Associate", "company": "Infosys Enterprise Solutions", "skills": "Data Cleansing, Excel, Tableau Basics"},
-                    {"title": f"Infrastructure {role} Lead", "company": "Tata Consultancy Services (TCS)", "skills": "Cloud Databases, AWS/Azure, Analytics Tools"},
-                    {"title": f"Core Systems {role}", "company": "HCLTech", "skills": "Statistical Modeling, Python, R Scripting"},
-                    {"title": f"Strategic Business {role}", "company": "Cognizant India", "skills": "PowerBI, Client Communication, Requirement Mapping"},
-                    {"title": f"Technical {role} Consultant", "company": "Tech Mahindra", "skills": "ETL Pipelines, Data Engineering Basics, SQL"},
-                    {"title": f"Operations {role}", "company": "Accenture India", "skills": "Process Optimization, Metrics Reporting, Dashboards"},
-                    {"title": f"Lead Analyst - Cloud Track", "company": "Capgemini", "skills": "Data Warehousing, Big Data Frameworks, Analytics"},
-                    {"title": f"Enterprise Data Evaluator", "company": "LTIMindtree", "skills": "Business Analytics, Predictive Modeling, SAS"},
-                    {"title": f"Predictive Insights {role}", "company": "Genpact", "skills": "Data Visualization, Pattern Recognition, Python"}
+                    {"title": f"Senior {role}", "company": "Wipro Technologies", "skills": ["SQL", "Python", "Dashboards"]},
+                    {"title": f"Junior {role} Associate", "company": "Infosys Solutions", "skills": ["Data Cleansing", "Excel", "Tableau"]},
+                    {"title": f"Infrastructure {role} Lead", "company": "Tata Consultancy Services (TCS)", "skills": ["Cloud Databases", "AWS", "Analytics"]},
+                    {"title": f"Core Systems {role}", "company": "HCLTech", "skills": ["Statistical Modeling", "Python", "R Scripting"]},
+                    {"title": f"Strategic Business {role}", "company": "Cognizant India", "skills": ["PowerBI", "Requirement Mapping"]},
+                    {"title": f"Technical {role} Consultant", "company": "Tech Mahindra", "skills": ["ETL Pipelines", "Data Engineering", "SQL"]},
+                    {"title": f"Operations {role}", "company": "Accenture India", "skills": ["Process Optimization", "Metrics Reporting"]},
+                    {"title": f"Lead Analyst - Cloud Track", "company": "Capgemini", "skills": ["Data Warehousing", "Big Data", "Analytics"]},
+                    {"title": f"Enterprise Data Evaluator", "company": "LTIMindtree", "skills": ["Business Analytics", "Predictive Modeling"]},
+                    {"title": f"Predictive Insights {role}", "company": "Genpact", "skills": ["Data Visualization", "Python", "Pattern Recognition"]}
                 ]
                 
-                # Loops through the fallback database to print every remaining slot up to 10
                 for i in range(jobs_found, 10):
                     job = fallback_jobs[i]
-                    st.markdown(f"### 🎯 Job Title: {job['title']}")
-                    st.markdown(f"🏢 **Company:** {job['company']}")
-                    st.markdown(f"💡 **Key Skills Required:** {job['skills']}")
-                    st.markdown("🔗 **How to Apply:** Check company official portal under standard regional openings.")
-                    st.markdown("---")
-                
-                st.info("💡 Additional live AI recommendations will unlock automatically once your Google API key cooldown finishes.")
+                    
+                    # Enhanced Card UI Layout for Fallback Database
+                    with st.container(border=True):
+                        st.markdown(f"### 🎯 {job['title']}")
+                        st.markdown(f"🏢 **Company:** {job['company']}")
+                        
+                        # Formats skills perfectly into clean tag pills
+                        st.write("💡 **Key Skills Required:**")
+                        cols = st.columns(len(job['skills']))
+                        for index, skill in enumerate(job['skills']):
+                            cols[index].button(skill, key=f"{job['company']}_{skill}_{i}", disabled=True)
+                        
+                        # Generates custom search string for company career portal directly
+                        portal_query = urllib.parse.quote(f"{job['company']} careers {job['title']} {city}")
+                        portal_url = f"https://google.com{portal_query}"
+                        st.link_button("🔍 Open Official Career Portal", portal_url, use_container_width=True)
+                    st.write("") # Spacer
